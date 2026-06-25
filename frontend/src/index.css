@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7367F0;
+  --color-primary-dark: #5E50EE;
+  --color-primary-light: #E9E7FD;
+  --color-success: #28C76F;
+  --color-success-light: #E8F8EF;
+  --color-warning: #FF9F43;
+  --color-warning-light: #FFF0E1;
+  --color-danger: #EA5455;
+  --color-danger-light: #FCEAEA;
+  --color-info: #00CFE8;
+  --color-info-light: #E0F9FC;
+  --color-body-bg: #F8F7FA;
+  --color-heading: #4B465C;
+  --color-body: #6F6B7D;
+  --color-muted: #A5A3AE;
+  --color-border: #DBDADE;
+  --color-sidebar: #2F3349;
+  --color-sidebar-text: #CFD3EC;
+  --color-sidebar-muted: #7983BB;
+  --font-sans: "Public Sans", Inter, system-ui, sans-serif;
+  --shadow-card: 0 2px 6px rgba(47, 43, 61, 0.08);
+  --shadow-modal: 0 5px 20px rgba(47, 43, 61, 0.15);
+}
+
+body {
+  @apply bg-body-bg text-body antialiased;
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .card {
+    @apply overflow-hidden rounded-[10px] bg-white shadow-[var(--shadow-card)];
+  }
+
+  .card-header {
+    @apply flex items-center justify-between border-b border-border px-6 py-5;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-heading;
+  }
+
+  .card-subtitle {
+    @apply text-sm text-muted;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-dark disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-5 py-2.5 text-sm font-medium text-heading transition hover:bg-body-bg;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-danger px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90;
+  }
+
+  .input-field {
+    @apply w-full rounded-md border border-border px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-primary focus:ring-[3px] focus:ring-primary/10;
+  }
+
+  .input-label {
+    @apply mb-1.5 block text-[13px] font-medium text-heading;
+  }
+
+  .table-header {
+    @apply bg-body-bg text-left text-[13px] font-medium text-body;
+  }
+
+  .table-cell {
+    @apply px-6 py-3;
+  }
+
+  .table-row {
+    @apply border-b border-border transition hover:bg-body-bg;
+  }
+
+  .alert-error {
+    @apply rounded-md bg-danger-light px-4 py-3 text-sm text-danger;
+  }
+
+  .alert-success {
+    @apply rounded-md bg-success-light px-4 py-3 text-sm text-success;
+  }
+
+  .link-primary {
+    @apply text-primary hover:text-primary-dark hover:underline;
+  }
+}
