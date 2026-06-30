@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -97,7 +98,9 @@ export default function Customers() {
               <tbody>
                 {customers.map((c) => (
                   <tr key={c._id} className="table-row">
-                    <td className="table-cell font-medium text-heading">{c.name}</td>
+                    <td className="table-cell font-medium">
+                      <Link to={`/customers/${c._id}`} className="link-primary">{c.name}</Link>
+                    </td>
                     <td className="table-cell">{c.email}</td>
                     <td className="table-cell">{c.phone || '-'}</td>
                     <td className="table-cell">{c.company || '-'}</td>

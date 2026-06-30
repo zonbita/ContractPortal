@@ -1,7 +1,13 @@
-import { Contract } from '../models/Contract.js';
+import { Document } from '../models/Document.js';
 import { Notification } from '../models/Notification.js';
 import { User } from '../models/User.js';
 import { sendEmail, buildExpirationEmail } from './emailService.js';
+import {
+  getContractEndDate,
+  getContractRemindersSent,
+  pushContractReminder,
+  toContractResponse,
+} from './adapters/contractAdapter.js';
 
 export const REMINDER_DAYS = [30, 15, 7, 1];
 
@@ -16,52 +22,57 @@ function daysBetween(from, to) {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
-function hasReminderBeenSent(contract, daysBeforeExpiry) {
-  return contract.remindersSent?.some((r) => r.daysBeforeExpiry === daysBeforeExpiry);
+function hasReminderBeenSent(doc, daysBeforeExpiry) {
+  return getContractRemindersSent(doc).some((r) => r.daysBeforeExpiry === daysBeforeExpiry);
 }
 
-async function notifyStaff(contract, daysLeft) {
+async function notifyStaff(doc, daysLeft) {
   const staffUsers = await User.find({
     role: { $in: ['admin', 'manager', 'staff'] },
     isActive: true,
   });
 
+  const contractView = toContractResponse(doc);
   const title = `Hợp đồng sắp hết hạn (${daysLeft} ngày)`;
-  const message = `${contract.contractNumber} - ${contract.title} sẽ hết hạn sau ${daysLeft} ngày.`;
+  const message = `${doc.documentNumber} - ${doc.title} sẽ hết hạn sau ${daysLeft} ngày.`;
 
   const notifications = staffUsers.map((user) => ({
     user: user._id,
     type: 'expiration_reminder',
     title,
     message,
-    contract: contract._id,
-    metadata: { daysLeft },
+    contract: doc._id,
+    metadata: { daysLeft, documentType: 'contract' },
   }));
 
   await Notification.insertMany(notifications);
 
-  const emailContent = buildExpirationEmail({ contract, daysLeft: daysLeft });
+  const emailContent = buildExpirationEmail({ contract: contractView, daysLeft });
   for (const user of staffUsers) {
     await sendEmail({ to: user.email, ...emailContent });
   }
 }
 
-async function processContractReminder(contract, today) {
-  const daysLeft = daysBetween(today, contract.endDate);
+async function processContractReminder(doc, today) {
+  const endDate = getContractEndDate(doc);
+  if (!endDate) return false;
+
+  const daysLeft = daysBetween(today, endDate);
   if (!REMINDER_DAYS.includes(daysLeft)) return false;
-  if (hasReminderBeenSent(contract, daysLeft)) return false;
+  if (hasReminderBeenSent(doc, daysLeft)) return false;
 
-  await notifyStaff(contract, daysLeft);
-
-  contract.remindersSent = contract.remindersSent || [];
-  contract.remindersSent.push({ daysBeforeExpiry: daysLeft, sentAt: new Date() });
-  await contract.save();
+  await notifyStaff(doc, daysLeft);
+  await pushContractReminder(doc, daysLeft);
   return true;
 }
 
 async function markExpiredContracts(today) {
-  await Contract.updateMany(
-    { endDate: { $lt: today }, status: 'active' },
+  await Document.updateMany(
+    {
+      type: 'contract',
+      'metadata.endDate': { $lt: today },
+      status: { $in: ['in_progress', 'signed', 'active'] },
+    },
     { status: 'expired' }
   );
 }
@@ -70,14 +81,15 @@ export async function runExpirationReminders() {
   const today = startOfDay(new Date());
   await markExpiredContracts(today);
 
-  const contracts = await Contract.find({
-    status: { $in: ['active', 'pending'] },
-    endDate: { $gte: today },
+  const contracts = await Document.find({
+    type: 'contract',
+    status: { $in: ['in_progress', 'signed', 'active', 'pending'] },
+    'metadata.endDate': { $gte: today },
   }).populate('customer');
 
   let sent = 0;
-  for (const contract of contracts) {
-    const processed = await processContractReminder(contract, today);
+  for (const doc of contracts) {
+    const processed = await processContractReminder(doc, today);
     if (processed) sent += 1;
   }
 

@@ -275,10 +275,15 @@ Theo Vuexy *Authentication → Cover*:
 
 | Menu | Icon Lucide |
 |------|-------------|
-| Dashboard | `LayoutDashboard` |
+| Tổng quan | `LayoutDashboard` |
 | Hợp đồng | `FileText` |
+| Hóa đơn | `Receipt` |
+| Báo giá | `FileSpreadsheet` |
+| Phiếu thu/chi | `Banknote` |
+| Tin nhắn | `MessageSquare` |
 | Khách hàng | `Users` |
-| Thông báo | `Bell` |
+| Tìm kiếm | `Search` |
+| Thùng rác | `Trash2` |
 | Admin | `Shield` |
 
 ---
@@ -286,9 +291,12 @@ Theo Vuexy *Authentication → Cover*:
 ## 9. Page Mapping
 
 ### Dashboard `/`
-- 4× Stat Card (grid `xl:grid-cols-4`)
-- 1× Advance Card: “Sắp hết hạn” + table
-- Optional: mini chart / progress card (phase 2)
+- 6× Summary Card (grid `xl:grid-cols-6`): Hợp đồng, Hóa đơn, Báo giá, Phiếu thu/chi, Chưa thanh toán, Quá hạn — nền semantic-tint + ring, icon box `42×42`, stat value `28px`.
+- Hàng biểu đồ (grid `lg:grid-cols-6`):
+  - Doanh thu (VND) — line chart 30 ngày, chiếm `4/6`.
+  - Tình trạng hóa đơn — donut (Đã/Chưa thanh toán/Quá hạn) + 2 bảng detail tinted (Chưa thanh toán, Quá hạn), chiếm `2/6`.
+- 4× bảng gần đây (grid `xl:grid-cols-4`, stretch chiều dọc): Hợp đồng, Hóa đơn, Báo giá, Phiếu thu/chi.
+- Card dùng radius `10px`, shadow-card; bảng detail giữ nền màu semantic.
 
 ### Hợp đồng `/contracts`
 - Page header + nút “Tạo hợp đồng” primary
@@ -379,7 +387,38 @@ Vuexy hỗ trợ Light / Dark / System. Quy ước dự phòng:
 
 ---
 
-## 13. Checklist triển khai UI
+## 13. Ngôn ngữ / i18n
+
+Ứng dụng hỗ trợ **Tiếng Việt** và **English**. Quy ước bắt buộc:
+
+- Không hard-code text hiển thị trực tiếp trong JSX nếu text đó xuất hiện trên UI người dùng.
+- Tất cả nhãn page title, button, empty state, table header, form label, modal title, status, document type phải đi qua `LanguageContext`.
+- Brand name như `Contract Portal`, thuật ngữ kỹ thuật phổ biến như `Dashboard`, `OCR`, `Timeline`, `Document Center` có thể giữ nguyên nếu cả hai ngôn ngữ dùng chung.
+- Khi thêm page mới, tạo namespace riêng trong dictionary, ví dụ `customerDetail.*`, `contractDetail.*`, `payment.*`.
+- Khi thêm status/document type mới, cập nhật đồng thời cả `vi` và `en`.
+- Format ngày/tiền phải nhận `locale` từ `useLanguage()`:
+  - `vi` → `vi-VN`
+  - `en` → `en-US`
+
+Ví dụ:
+
+```jsx
+const { locale, t } = useLanguage();
+
+<PageHeader title={t('customerDetail.profile')} />
+<span>{formatCurrency(amount, locale)}</span>
+```
+
+Checklist i18n trước khi merge:
+
+- [ ] Không còn text UI mới hard-code trong JSX.
+- [ ] Toggle EN/VI không làm lẫn ngôn ngữ trên page mới.
+- [ ] Empty state, modal, form label, table header đều có bản dịch.
+- [ ] Status badge và document type lấy nhãn từ dictionary.
+
+---
+
+## 14. Checklist triển khai UI
 
 - [x] Đổi primary từ indigo → `#7367F0` (Vuexy purple)
 - [x] Sidebar `#2F3349`, active item primary
@@ -393,7 +432,7 @@ Vuexy hỗ trợ Light / Dark / System. Quy ước dự phòng:
 
 ---
 
-## 14. Tài liệu tham khảo
+## 15. Tài liệu tham khảo
 
 - [Vuexy — Cards Advance](https://demos.pixinvent.com/vuexy-html-admin-template/html/vertical-menu-template/cards-advance.html)
 - [Vuexy — Cards Statistics](https://demos.pixinvent.com/vuexy-html-admin-template/html/vertical-menu-template/cards-statistics.html)

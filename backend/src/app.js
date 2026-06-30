@@ -5,8 +5,11 @@ import authRoutes from './routes/authRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
 import appendixRoutes from './routes/appendixRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 const app = express();
 
@@ -25,8 +28,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api/contracts/:contractId/appendices', appendixRoutes);
+app.use('/api/documents', documentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

@@ -1,23 +1,13 @@
-const statusStyles = {
-  draft: 'bg-[#F1F0F2] text-[#6F6B7D]',
-  pending: 'bg-warning-light text-warning',
-  active: 'bg-success-light text-success',
-  expired: 'bg-danger-light text-danger',
-  terminated: 'bg-[#F1F0F2] text-[#A8AAAE]',
-};
-
-const statusLabels = {
-  draft: 'Draft',
-  pending: 'Pending',
-  active: 'Active',
-  expired: 'Expired',
-  terminated: 'Terminated',
-};
+import { useLanguage } from '../context/LanguageContext';
+import { STATUS_COLORS } from '../utils/constants';
 
 export default function StatusBadge({ status }) {
+  const { statusLabel } = useLanguage();
+  const styles = STATUS_COLORS[status] || STATUS_COLORS.draft;
+
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusStyles[status] || statusStyles.draft}`}>
-      {statusLabels[status] || status}
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${styles}`}>
+      {statusLabel(status)}
     </span>
   );
 }

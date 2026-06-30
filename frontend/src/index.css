@@ -1,5 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-primary: #7367F0;
@@ -14,16 +16,37 @@
   --color-info: #00CFE8;
   --color-info-light: #E0F9FC;
   --color-body-bg: #F8F7FA;
+  --color-card: #FFFFFF;
+  --color-surface: #FFFFFF;
   --color-heading: #4B465C;
   --color-body: #6F6B7D;
   --color-muted: #A5A3AE;
   --color-border: #DBDADE;
-  --color-sidebar: #2F3349;
+  --color-sidebar: #1e1b4b;
   --color-sidebar-text: #CFD3EC;
   --color-sidebar-muted: #7983BB;
-  --font-sans: "Public Sans", Inter, system-ui, sans-serif;
+  --font-sans: "Inter", "Public Sans", system-ui, sans-serif;
   --shadow-card: 0 2px 6px rgba(47, 43, 61, 0.08);
   --shadow-modal: 0 5px 20px rgba(47, 43, 61, 0.15);
+  --shadow-soft: 0 4px 24px rgba(47, 43, 61, 0.06);
+  --shadow-soft-lg: 0 8px 30px rgba(47, 43, 61, 0.08);
+}
+
+.dark {
+  --color-primary-light: rgba(115, 103, 240, 0.18);
+  --color-success-light: rgba(40, 199, 111, 0.15);
+  --color-warning-light: rgba(255, 159, 67, 0.15);
+  --color-danger-light: rgba(234, 84, 85, 0.15);
+  --color-info-light: rgba(0, 207, 232, 0.15);
+  --color-body-bg: #0b0d17;
+  --color-card: #141728;
+  --color-surface: #141728;
+  --color-heading: #EAEAEA;
+  --color-body: #B0B3C5;
+  --color-muted: #7A7D8C;
+  --color-border: #2a2d3e;
+  --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --shadow-soft-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 
 body {
@@ -32,8 +55,20 @@ body {
 }
 
 @layer components {
+  .sidebar-gradient {
+    background: linear-gradient(180deg, #1e1b4b 0%, #252a47 45%, #2F3349 100%);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-soft-lg {
+    box-shadow: var(--shadow-soft-lg);
+  }
+
   .card {
-    @apply overflow-hidden rounded-[10px] bg-white shadow-[var(--shadow-card)];
+    @apply overflow-hidden rounded-2xl bg-card shadow-soft;
   }
 
   .card-header {
@@ -49,11 +84,11 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-dark disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-primary/25 transition hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-5 py-2.5 text-sm font-medium text-heading transition hover:bg-body-bg;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-heading transition hover:bg-body-bg;
   }
 
   .btn-danger {
@@ -61,7 +96,7 @@ body {
   }
 
   .input-field {
-    @apply w-full rounded-md border border-border px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-primary focus:ring-[3px] focus:ring-primary/10;
+    @apply w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-primary focus:ring-[3px] focus:ring-primary/10;
   }
 
   .input-label {

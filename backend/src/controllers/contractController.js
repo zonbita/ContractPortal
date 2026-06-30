@@ -1,107 +1,52 @@
-import { Contract } from '../models/Contract.js';
-import { uploadFiles } from '../services/storageService.js';
-
-function buildContractFilter(user, query) {
-  const filter = {};
-  if (user.role === 'client' && user.customer) {
-    filter.customer = user.customer;
-  }
-  if (query.status) filter.status = query.status;
-  if (query.customer) filter.customer = query.customer;
-  if (query.search) {
-    filter.$or = [
-      { contractNumber: { $regex: query.search, $options: 'i' } },
-      { title: { $regex: query.search, $options: 'i' } },
-    ];
-  }
-  return filter;
-}
-
-function parseContractBody(body) {
-  return {
-    contractNumber: body.contractNumber,
-    title: body.title,
-    customer: body.customer,
-    startDate: body.startDate,
-    endDate: body.endDate,
-    value: body.value ? Number(body.value) : 0,
-    status: body.status || 'draft',
-    description: body.description,
-  };
-}
+import {
+  listContracts,
+  getContract,
+  createContract,
+  updateContract,
+  deleteContract,
+  updateContractStatus,
+} from '../services/adapters/contractAdapter.js';
 
 export const getContracts = async (req, res) => {
-  const filter = buildContractFilter(req.user, req.query);
-  const contracts = await Contract.find(filter)
-    .populate('customer', 'name email company')
-    .sort({ createdAt: -1 });
+  const contracts = await listContracts(req.user, req.query);
   res.json(contracts);
 };
 
-export const getContract = async (req, res) => {
-  const contract = await Contract.findById(req.params.id).populate('customer');
+export const getContractById = async (req, res) => {
+  const contract = await getContract(req.params.id, req.user);
   if (!contract) return res.status(404).json({ message: 'Contract not found' });
-
-  if (req.user.role === 'client' && String(req.user.customer) !== String(contract.customer._id)) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-
+  if (contract.forbidden) return res.status(403).json({ message: 'Access denied' });
   res.json(contract);
 };
 
-export const createContract = async (req, res) => {
+export const createContractHandler = async (req, res) => {
   try {
-    const data = parseContractBody(req.body);
-    const files = req.files?.length ? await uploadFiles(req.files) : [];
-
-    const contract = await Contract.create({
-      ...data,
-      files,
-      createdBy: req.user._id,
-    });
-
-    const populated = await Contract.findById(contract._id).populate('customer', 'name email company');
-    res.status(201).json(populated);
+    const contract = await createContract(req.user, req.body, req.files);
+    res.status(201).json(contract);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-export const updateContract = async (req, res) => {
+export const updateContractHandler = async (req, res) => {
   try {
-    const contract = await Contract.findById(req.params.id);
+    const contract = await updateContract(req.params.id, req.user, req.body, req.files);
     if (!contract) return res.status(404).json({ message: 'Contract not found' });
-
-    const data = parseContractBody(req.body);
-    Object.assign(contract, data);
-
-    if (req.files?.length) {
-      const newFiles = await uploadFiles(req.files);
-      contract.files.push(...newFiles);
-    }
-
-    await contract.save();
-    const populated = await Contract.findById(contract._id).populate('customer', 'name email company');
-    res.json(populated);
+    if (contract.forbidden) return res.status(403).json({ message: 'Access denied' });
+    res.json(contract);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-export const deleteContract = async (req, res) => {
-  const contract = await Contract.findByIdAndDelete(req.params.id);
+export const deleteContractHandler = async (req, res) => {
+  const contract = await deleteContract(req.params.id, req.user);
   if (!contract) return res.status(404).json({ message: 'Contract not found' });
   res.json({ message: 'Contract deleted' });
 };
 
-export const updateContractStatus = async (req, res) => {
-  const { status } = req.body;
-  const contract = await Contract.findByIdAndUpdate(
-    req.params.id,
-    { status },
-    { new: true, runValidators: true }
-  ).populate('customer', 'name email company');
-
+export const updateContractStatusHandler = async (req, res) => {
+  const contract = await updateContractStatus(req.params.id, req.user, req.body.status);
   if (!contract) return res.status(404).json({ message: 'Contract not found' });
   res.json(contract);
 };

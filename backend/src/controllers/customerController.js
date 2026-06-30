@@ -1,4 +1,9 @@
 import { Customer } from '../models/Customer.js';
+import { ActivityLog } from '../models/ActivityLog.js';
+import { Document } from '../models/Document.js';
+import { Payment } from '../models/Payment.js';
+import { getPaymentSummary } from '../services/paymentService.js';
+import { toContractResponse } from '../services/adapters/contractAdapter.js';
 
 function buildCustomerFilter(user, query) {
   const filter = {};
@@ -30,6 +35,41 @@ export const getCustomer = async (req, res) => {
   }
 
   res.json(customer);
+};
+
+export const getCustomerOverview = async (req, res) => {
+  const customer = await Customer.findById(req.params.id);
+  if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+  if (req.user.role === 'client' && String(req.user.customer) !== String(customer._id)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+
+  const contracts = await Document.find({ type: 'contract', customer: customer._id })
+    .populate('customer', 'name email company')
+    .sort({ createdAt: -1 });
+  const contractIds = contracts.map((doc) => doc._id);
+
+  const [paymentSummary, payments, activity] = await Promise.all([
+    getPaymentSummary(req.user, { customer: customer._id }),
+    Payment.find({ customer: customer._id })
+      .populate('contract', 'documentNumber title')
+      .sort({ paidAt: -1, createdAt: -1 })
+      .limit(10),
+    ActivityLog.find({ document: { $in: contractIds } })
+      .populate('user', 'name email')
+      .populate('document', 'documentNumber title type')
+      .sort({ createdAt: -1 })
+      .limit(20),
+  ]);
+
+  res.json({
+    customer,
+    contracts: contracts.map(toContractResponse),
+    paymentSummary,
+    recentPayments: payments,
+    activity,
+  });
 };
 
 export const createCustomer = async (req, res) => {

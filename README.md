@@ -1,6 +1,6 @@
-# Contract Portal
+# Contract Portal — Document Management
 
-Hệ thống quản lý hợp đồng MVP — lưu trữ hợp đồng, theo dõi trạng thái, ngày hết hạn, khách hàng, phụ lục và nhắc nhở gia hạn.
+Hệ thống quản lý tài liệu doanh nghiệp — hợp đồng, hóa đơn, báo giá, phiếu thu/chi, tìm kiếm toàn cục, OCR cơ bản và nhắc nhở gia hạn hợp đồng.
 
 ## Tech Stack
 
@@ -11,38 +11,54 @@ Hệ thống quản lý hợp đồng MVP — lưu trữ hợp đồng, theo dõ
 | Auth | JWT |
 | Storage | Local / AWS S3 / Cloudinary / MinIO |
 | Reminders | node-cron + Email + In-app notifications |
+| OCR | pdf-parse (async sau upload) |
 
-## Tính năng MVP v1
+## Tính năng Phase 1
 
-### Authentication
-- Đăng ký / Đăng nhập / Quên mật khẩu
-- JWT token
-- Roles: **Admin**, **Manager**, **Staff**, **Client**
+### Document Core
+- Model thống nhất `Document` với metadata theo loại: `contract`, `invoice`, `quotation`, `receipt`, `payment_voucher`, `appendix`, `acceptance_report`
+- API `/api/documents` — CRUD generic theo type
+- Adapter layer giữ tương thích `/api/contracts` (frontend cũ không bị phá)
 
-### Quản lý khách hàng
-- Name, Email, Phone, Company, Address, Tax Code
+### Quản lý hóa đơn
+- CRUD hóa đơn qua Document type `invoice`
+- Theo dõi thanh toán, hạn thanh toán, VAT
 
-### Quản lý hợp đồng
-- Contract Number, Title, Customer, Start/End Date, Value, Status
-- Trạng thái: Draft, Pending, Active, Expired, Terminated
-- Upload file: PDF, DOCX, XLSX
+### Tìm kiếm
+- `GET /api/documents/search?q=...&type=...`
+- Global search bar trên header → `/search?q=...`
 
-### Phụ lục hợp đồng
-- Thêm/sửa/xóa phụ lục kèm file đính kèm
+### OCR
+- Trích xuất text từ PDF sau upload (async)
+- Tab OCR trên trang chi tiết tài liệu
+- `POST /api/documents/:id/ocr` — quét lại
 
-### Nhắc nhở hết hạn
-- Cron job chạy hàng ngày lúc 8:00 AM
-- Gửi nhắc nhở trước **30, 15, 7, 1** ngày
-- Kênh: Email + Notification trong app + Dashboard
+### Dashboard mở rộng
+- Tổng hợp đồng, đang hoạt động, hết hạn
+- Hóa đơn chưa thanh toán / quá hạn
+- Tổng giá trị hợp đồng
 
-### Dashboard
-- Total Contracts
-- Active Contracts
-- Expired Contracts
-- Upcoming Expiration (30 ngày)
-- Total Contract Value
+### Phase 2 (sẵn sàng)
+- Báo giá, Phiếu thu/chi (UI + API)
+- Activity Log, Comments, Version history trên document detail
 
-## Cài đặt
+## Chạy nhanh
+
+```bash
+npm run install:all   # Cài backend + frontend
+npm run seed          # Tạo admin mặc định
+npm run migrate       # Migrate contracts → documents (one-time)
+npm run dev           # Chạy cả backend + frontend
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5001 |
+
+**Admin mặc định:** `admin@contractportal.com` / `admin123`
+
+## Cài đặt chi tiết
 
 ### Yêu cầu
 - Node.js 18+
@@ -54,11 +70,9 @@ Hệ thống quản lý hợp đồng MVP — lưu trữ hợp đồng, theo dõ
 cd backend
 cp .env.example .env
 npm install
-npm run seed        # Tạo admin mặc định
-npm run dev         # http://localhost:5000
+npm run seed
+npm run dev
 ```
-
-**Admin mặc định:** `admin@contractportal.com` / `admin123`
 
 ### Frontend
 
@@ -66,8 +80,31 @@ npm run dev         # http://localhost:5000
 cd frontend
 cp .env.example .env
 npm install
-npm run dev         # http://localhost:5173
+npm run dev
 ```
+
+## Migration dữ liệu
+
+Sau khi deploy Document model, chạy một lần:
+
+```bash
+npm run migrate
+```
+
+Script `migrateContractsToDocuments.js` copy collection `contracts` và `appendices` sang `documents`, giữ `legacyId` để tra cứu.
+
+## API Endpoints
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET/POST | `/api/documents?type=invoice` | CRUD tài liệu theo loại |
+| GET | `/api/documents/search?q=...` | Tìm kiếm toàn cục |
+| POST | `/api/documents/:id/ocr` | Chạy lại OCR |
+| GET | `/api/documents/:id/activity` | Nhật ký hoạt động |
+| GET/POST | `/api/documents/:id/comments` | Bình luận |
+| POST | `/api/documents/:id/versions` | Thêm phiên bản file |
+| GET/POST | `/api/contracts` | Legacy adapter (→ Document type=contract) |
+| GET | `/api/dashboard/stats` | Thống kê dashboard |
 
 ## Cấu hình Storage
 
@@ -90,43 +127,27 @@ SMTP_PASS=app_password
 EMAIL_FROM=Contract Portal <noreply@contractportal.com>
 ```
 
-Nếu chưa cấu hình SMTP, hệ thống vẫn chạy và ghi log thay vì gửi email.
-
-## API Endpoints
-
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| POST | `/api/auth/register` | Đăng ký |
-| POST | `/api/auth/login` | Đăng nhập |
-| POST | `/api/auth/forgot-password` | Quên mật khẩu |
-| GET | `/api/customers` | Danh sách KH |
-| POST | `/api/contracts` | Tạo hợp đồng (+ files) |
-| GET | `/api/dashboard/stats` | Thống kê dashboard |
-| GET | `/api/notifications` | Thông báo |
-
 ## Phân quyền
 
 | Role | Quyền |
 |------|-------|
 | Admin | Toàn quyền, quản lý users |
-| Manager | CRUD hợp đồng/KH, xóa |
-| Staff | Tạo/sửa hợp đồng, KH |
-| Client | Xem hợp đồng của mình |
+| Manager | CRUD tài liệu/KH, xóa |
+| Staff | Tạo/sửa tài liệu, KH |
+| Client | Xem tài liệu của mình |
 
 ## Cấu trúc thư mục
 
 ```
 ContractPortal/
-├── backend/
-│   └── src/
-│       ├── models/       # User, Customer, Contract, Appendix, Notification
-│       ├── controllers/
-│       ├── routes/
-│       ├── services/     # Storage, Email, Reminder
-│       └── jobs/         # Cron reminder
-└── frontend/
-    └── src/
-        ├── pages/        # Dashboard, Contracts, Customers...
-        ├── components/
-        └── context/      # Auth
+├── backend/src/
+│   ├── models/          # Document, Customer, User, ActivityLog, Comment
+│   ├── schemas/         # documentMetadata validators
+│   ├── services/        # documentService, searchService, ocrService
+│   │   └── adapters/    # contractAdapter (legacy API)
+│   ├── routes/          # documentRoutes, contractRoutes
+│   └── scripts/         # migrateContractsToDocuments.js
+└── frontend/src/
+    ├── pages/           # Invoices, Quotations, Receipts, DocumentDetail, SearchPage
+    └── components/documents/
 ```

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getCustomers,
   getCustomer,
+  getCustomerOverview,
   createCustomer,
   updateCustomer,
   deleteCustomer,
@@ -13,6 +14,7 @@ const router = Router();
 router.use(protect);
 
 router.get('/', getCustomers);
+router.get('/:id/overview', getCustomerOverview);
 router.get('/:id', getCustomer);
 router.post('/', staffOrAbove, createCustomer);
 router.put('/:id', staffOrAbove, updateCustomer);

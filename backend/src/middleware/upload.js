@@ -3,13 +3,17 @@ import path from 'path';
 
 const ALLOWED_TYPES = [
   'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/tiff',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/msword',
   'application/vnd.ms-excel',
 ];
 
-const ALLOWED_EXT = ['.pdf', '.docx', '.xlsx', '.doc', '.xls'];
+const ALLOWED_EXT = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff', '.docx', '.xlsx', '.doc', '.xls'];
 
 const storage = multer.memoryStorage();
 
@@ -19,7 +23,7 @@ const fileFilter = (_req, file, cb) => {
     cb(null, true);
     return;
   }
-  cb(new Error('Only PDF, DOCX, and XLSX files are allowed'), false);
+  cb(new Error('Only PDF, image, DOCX, and XLSX files are allowed'), false);
 };
 
 export const upload = multer({
